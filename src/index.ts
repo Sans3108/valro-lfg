@@ -37,7 +37,7 @@ const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
 let commandIDs: { name: string; id: string }[] = [];
 
-await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID as string, '1062400948732956712' /* 788184621627473970 ValoRo server */), { body: commandsData }).then((res: any) => {
+await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID as string, process.env.GUILD_ID as string), { body: commandsData }).then((res: any) => {
   commandIDs = res.filter((c: any) => c.type == 1).map((c: any) => ({ name: c.name, id: c.id }));
 });
 
