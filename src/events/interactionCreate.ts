@@ -44,7 +44,7 @@ const evt: event = {
       if (hour) timeString += `${hour}h `;
       const minute = Math.floor((seconds % 3600) / 60);
       if (minute) timeString += `${minute}m `;
-      const second = seconds % 60;
+      const second = Math.floor(seconds % 60);
       if (second) timeString += `${second}s`;
 
       return timeString.trim();

@@ -46,18 +46,21 @@ const cmd: command = {
     .setDMPermission(false),
   config: {
     group: 'search',
-    cooldown: 3
+    cooldown: 5 * 60
   },
   async execute(interaction: ChatInputCommandInteraction, client: CustomClient) {
     const noVc = new Embed().setColor(client.config.embedColor).setDescription(`You must be in a Voice Channel to use this command!`);
 
-    if (!(interaction.member as GuildMember).voice.channel) {
+    const member = await interaction.guild!.members.fetch({ user: interaction.user.id, force: true });
+    interaction.member = member;
+
+    if (!interaction.member.voice.channelId) {
       return interaction.reply({ embeds: [noVc], ephemeral: true });
     }
 
-    const gamemode: keyof typeof Gamemode = interaction.options.getString('gamemode') as Gamemode;
-    const count: number = interaction.options.getInteger('count') as number;
-    const vc = (interaction.member as GuildMember).voice.channel!;
+    const gamemode: keyof typeof Gamemode = interaction.options.getString('gamemode', true) as Gamemode;
+    const count: number = interaction.options.getInteger('count', true);
+    const vc = `<#${interaction.member.voice.channelId}>`;
     const info = interaction.options.getString('info');
 
     const Rank = client.config.ranks;
