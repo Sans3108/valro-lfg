@@ -49,6 +49,22 @@ import j5 from 'json5';
 export interface CustomClient extends Client {
   config: {
     embedColor: number;
+    ranks: {
+      unranked: string;
+      iron: string;
+      bronze: string;
+      silver: string;
+      gold: string;
+      platinum: string;
+      diamond: string;
+      ascendant: string;
+      immortal: string;
+      radiant: string;
+    };
+    arrows: {
+      left: string;
+      right: string;
+    };
   };
   commands: Collection<string, commandWithId>;
   cooldowns: Collection<string, Collection<string, number>>;

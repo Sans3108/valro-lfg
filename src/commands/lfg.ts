@@ -16,24 +16,6 @@ enum Gamemode {
   other = 'other'
 }
 
-enum Rank {
-  iron = '<:iron:1064032537648840835>',
-  bronze = '<:bronze:1064032528110993509>',
-  silver = '<:silver:1064032543751540766>',
-  gold = '<:gold:1064032532561133639>',
-  platinum = '<:platinum:1064032539464966246>',
-  diamond = '<:diamond:1064032530136834059>',
-  ascendant = '<:ascendant:1064032525149810698>',
-  immortal = '<:immortal:1064032534469550211>',
-  radiant = '<:radiant:1064032542052859955>',
-  unranked = '<:unranked:1064032993586450576>'
-}
-
-enum arrow {
-  left = '<a:left_arrow:1063957940010221680>',
-  right = '<a:right_arrow:1064041762865295370>'
-}
-
 const capitalize = (str: string) => {
   return str.charAt(0).toUpperCase() + str.slice(1);
 };
@@ -77,6 +59,9 @@ const cmd: command = {
     const count: number = interaction.options.getInteger('count') as number;
     const vc = (interaction.member as GuildMember).voice.channel!;
     const info = interaction.options.getString('info');
+
+    const Rank = client.config.ranks;
+    const arrow = client.config.arrows;
 
     const menu = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
       new StringSelectMenuBuilder()

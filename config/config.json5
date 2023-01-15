@@ -1,3 +1,19 @@
 {
-  embedColor: 0xdc3d4b
+  embedColor: 0xdc3d4b,
+  ranks: {
+    unranked: '<:unranked:1064032993586450576>',
+    iron: '<:iron:1064032537648840835>',
+    bronze: '<:bronze:1064032528110993509>',
+    silver: '<:silver:1064032543751540766>',
+    gold: '<:gold:1064032532561133639>',
+    platinum: '<:platinum:1064032539464966246>',
+    diamond: '<:diamond:1064032530136834059>',
+    ascendant: '<:ascendant:1064032525149810698>',
+    immortal: '<:immortal:1064032534469550211>',
+    radiant: '<:radiant:1064032542052859955>'
+  },
+  arrows: {
+    left: '<a:left_arrow:1063957940010221680>',
+    right: '<a:right_arrow:1064041762865295370>'
+  }
 }

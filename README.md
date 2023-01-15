@@ -31,3 +31,6 @@ Make sure to replace `PUT_YOUR_CLIENT_ID_HERE` with your actual client id.
 
 ### Running:
 If you did everything above right, you should be able to run `npm start` in the terminal and the bot should start.
+
+## Problems
+- Weird output instead of ranks and around the voice channel? Go into the `config` folder and change the emotes in the `config.json5`
