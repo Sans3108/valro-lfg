@@ -38,3 +38,4 @@ If you did everything above right, you should be able to run `npm start` in the 
 ## Screenshots
 ![](https://media.discordapp.net/attachments/1062400951622828145/1064237481337290952/image.png)
 ![](https://media.discordapp.net/attachments/1062400951622828145/1064237467915526144/image.png)
+![](https://media.discordapp.net/attachments/1062400951622828145/1064237821784768592/image.png)
