@@ -20,14 +20,14 @@ GUILD_ID=
 - Copy and paste the token in the `.env` file next to `TOKEN=`
 - Go back to the "General Information" tab on the left side and copy paste the client id in the `.env` file next to `CLIENT_ID`
 - Go to your discord server and right click your server's icon, then copy paste the id in the `.env` file next to `GUILD_ID`
+
+Make sure there are no spaces between the `=` and the text you pasted in, as well as after the text you pasted in.
+
 - Now use this link to invite your bot to your server
 ```
 https://discord.com/api/oauth2/authorize?client_id=PUT_YOUR_CLIENT_ID_HERE&permissions=281600&scope=bot%20applications.commands
 ```
 Make sure to replace `PUT_YOUR_CLIENT_ID_HERE` with your actual client id.
-
-Note: 
-Make sure there are no spaces between the `=` and the text you pasted in, as well as after the text you pasted in!
 
 ### Running:
 If you did everything above right, you should be able to run `npm start` in the terminal and the bot should start.
