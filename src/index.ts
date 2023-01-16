@@ -72,7 +72,7 @@ export interface CustomClient extends Client {
 
 console.log('Setting up client...');
 const client = new Client({
-  intents: [Intents.DirectMessages, Intents.Guilds, Intents.GuildMessages]
+  intents: [Intents.DirectMessages, Intents.Guilds, Intents.GuildMessages, Intents.GuildVoiceStates]
 }) as CustomClient;
 
 client.config = j5.parse(readFileSync(path.join(__dirname, '../config', 'config.json5'), 'utf8'));

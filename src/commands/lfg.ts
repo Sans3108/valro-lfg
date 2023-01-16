@@ -1,13 +1,4 @@
-import {
-  SlashCommandBuilder,
-  EmbedBuilder as Embed,
-  ChatInputCommandInteraction,
-  ActionRowBuilder,
-  StringSelectMenuBuilder,
-  ComponentType,
-  StringSelectMenuInteraction,
-  GuildMember
-} from 'discord.js';
+import { SlashCommandBuilder, EmbedBuilder as Embed, ChatInputCommandInteraction, ActionRowBuilder, StringSelectMenuBuilder, ComponentType, StringSelectMenuInteraction } from 'discord.js';
 import { command, CustomClient } from '..';
 
 enum Gamemode {
@@ -46,13 +37,12 @@ const cmd: command = {
     .setDMPermission(false),
   config: {
     group: 'search',
-    cooldown: 5 * 60
+    cooldown: 1
   },
   async execute(interaction: ChatInputCommandInteraction, client: CustomClient) {
     const noVc = new Embed().setColor(client.config.embedColor).setDescription(`You must be in a Voice Channel to use this command!`);
 
-    const member = await interaction.guild!.members.fetch({ user: interaction.user.id, force: true });
-    interaction.member = member;
+    interaction.member = await interaction.guild!.members.fetch({ user: interaction.user.id, force: true });
 
     if (!interaction.member.voice.channelId) {
       return interaction.reply({ embeds: [noVc], ephemeral: true });
