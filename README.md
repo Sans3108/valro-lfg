@@ -34,3 +34,8 @@ If you did everything above right, you should be able to run `npm start` in the 
 
 ## Problems
 - Weird output instead of ranks and around the voice channel? Go into the `config` folder and change the emotes in the `config.json5`
+
+## Screenshots
+![](https://media.discordapp.net/attachments/1062400951622828145/1064237481337290952/image.png)
+![](https://media.discordapp.net/attachments/1062400951622828145/1064237467915526144/image.png)
+![](https://media.discordapp.net/attachments/1062400951622828145/1064237821784768592/image.png)
