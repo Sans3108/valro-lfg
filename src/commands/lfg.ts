@@ -37,7 +37,7 @@ const cmd: command = {
     .setDMPermission(false),
   config: {
     group: 'search',
-    cooldown: 1
+    cooldown: 5 * 60
   },
   async execute(interaction: ChatInputCommandInteraction, client: CustomClient) {
     const noVc = new Embed().setColor(client.config.embedColor).setDescription(`You must be in a Voice Channel to use this command!`);
