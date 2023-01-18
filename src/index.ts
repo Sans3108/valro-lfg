@@ -1,4 +1,3 @@
-//#region Startup
 console.log('Starting...');
 
 console.log('Configuring ENV vars...');
@@ -15,7 +14,6 @@ import { readdirSync } from 'fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-//const __dirname = path.resolve(path.dirname(decodeURI(new URL(import.meta.url).pathname)));
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
