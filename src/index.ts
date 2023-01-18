@@ -12,8 +12,12 @@ if (!process.env.TOKEN || !process.env.CLIENT_ID) {
 console.log('Registering commands...');
 import { REST, Routes, SlashCommandBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody as CommandData } from 'discord.js';
 import { readdirSync } from 'fs';
-import path from 'path';
-const __dirname = path.resolve(path.dirname(decodeURI(new URL(import.meta.url).pathname)));
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+//const __dirname = path.resolve(path.dirname(decodeURI(new URL(import.meta.url).pathname)));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const commandFiles = readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith('.js'));
 
