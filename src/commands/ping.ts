@@ -11,7 +11,7 @@ const cmd: command = {
     const message = await interaction.deferReply({ fetchReply: true });
 
     // uptime
-    let totalSeconds = client.uptime ?? 0 / 1000;
+    let totalSeconds = (client.uptime ?? 0) / 1000;
     let days = Math.floor(totalSeconds / 86400);
     totalSeconds %= 86400;
     let hours = Math.floor(totalSeconds / 3600);
