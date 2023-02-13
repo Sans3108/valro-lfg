@@ -1,8 +1,13 @@
+## Disclaimer
+This bot was created for the [Valorant Romania](https://discord.gg/valorantromania) Discord server and as such it is configured and tailored for this server only. It is however pretty easy to edit and configure for your own needs/Discord server if you have TypeScript and NodeJS knowledge.
+
+_Also I know I don't follow most code conventions or whatever, but I made this in 2 days so cut me some slack, ok? XD_
+
 ## How to set up:
 
 ### Requirements:
-- Latest LTS version of [Node](https://nodejs.org) and NPM (comes bundled with Node)
-- Some knowledge of programming and Discord
+- Latest LTS version of [NodeJS](https://nodejs.org) and NPM (comes bundled with Node)
+- Some knowledge of programming/Sys Admin (Terminal usage) and Discord
 
 ### Preparation:
 - Clone the repo
@@ -18,8 +23,8 @@ GUILD_ID=
 - Go to the [Discord Developer Portal](https://discord.com/developers/applications) and create an application
 - In the application page, go to the "Bot" tab on the left side and click on the "Add Bot" button
 - Copy and paste the token in the `.env` file next to `TOKEN=`
-- Go back to the "General Information" tab on the left side and copy paste the client id in the `.env` file next to `CLIENT_ID`
-- Go to your discord server and right click your server's icon, then copy paste the id in the `.env` file next to `GUILD_ID`
+- Go back to the "General Information" tab on the left side and copy paste the client id in the `.env` file next to `CLIENT_ID=`
+- Go to your discord server and right click your server's icon, then copy paste the id in the `.env` file next to `GUILD_ID=`
 
 Make sure there are no spaces between the `=` and the text you pasted in, as well as after the text you pasted in.
 
