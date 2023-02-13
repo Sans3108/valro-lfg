@@ -108,7 +108,7 @@ for (const file of commandFiles) {
   command.id = commandIDs.find(c => c.name === command.data.name)!.id;
   client.commands.set(command.data.name, command);
 
-  console.log(`Loaded command: ${command.data.name}`);
+  console.log(`Loaded command: ${command.data.name} (ID: ${command.id})`);
 }
 
 console.log('Logging in...');
