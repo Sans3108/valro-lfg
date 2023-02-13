@@ -40,12 +40,13 @@ const cmd: command = {
     cooldown: 5 * 60
   },
   async execute(interaction: ChatInputCommandInteraction, client: CustomClient) {
+    await interaction.deferReply({ ephemeral: true });
     const noVc = new Embed().setColor(client.config.embedColor).setDescription(`You must be in a Voice Channel to use this command!`);
 
     interaction.member = await interaction.guild!.members.fetch({ user: interaction.user.id, force: true });
 
     if (!interaction.member.voice.channelId) {
-      return interaction.reply({ embeds: [noVc], ephemeral: true });
+      return interaction.editReply({ embeds: [noVc] });
     }
 
     const gamemode: keyof typeof Gamemode = interaction.options.getString('gamemode', true) as Gamemode;
@@ -128,17 +129,15 @@ const cmd: command = {
       .setFooter({ text: 'Valorant Romania' })
       .setTimestamp();
 
-    const message = await interaction.reply({ embeds: [chooseRanks], components: [menu], ephemeral: true });
+    const message = await interaction.editReply({ embeds: [chooseRanks], components: [menu] });
 
     const filter = (i: StringSelectMenuInteraction) => {
       return i.user.id === interaction.user.id;
     };
 
     message
-      .awaitMessageComponent({ filter, componentType: ComponentType.StringSelect, time: 1 * 60 * 1000 })
+      .awaitMessageComponent({ filter, componentType: ComponentType.StringSelect, time: 1 * 60 * 1000 }) // 1 minute
       .then(i => {
-        interaction.deleteReply();
-
         const lfg = new Embed()
           .setTitle(`Looking for ${count > 1 ? count : 'a'} player${count > 1 ? 's' : ''}!`)
           .addFields(
@@ -168,9 +167,13 @@ const cmd: command = {
           });
         }
 
-        message.interaction.channel?.send({ embeds: [lfg] });
+        interaction.channel?.send({ embeds: [lfg] });
+        interaction.deleteReply();
       })
-      .catch(e => interaction.deleteReply());
+      .catch(e => {
+        console.log(e);
+        interaction.deleteReply();
+      });
 
     return;
   }
