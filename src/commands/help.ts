@@ -4,7 +4,7 @@ import { command, CustomClient } from '..';
 const cmd: command = {
   data: new SlashCommandBuilder().setName('help').setDescription('Help with commands.').setDMPermission(true),
   config: {
-    group: 'general',
+    group: 'info',
     cooldown: 3
   },
   async execute(interaction: ChatInputCommandInteraction, client: CustomClient) {
@@ -16,7 +16,7 @@ const cmd: command = {
       .setColor(client.config.embedColor)
       .setDescription(`**${client.user!.username}** - A simple bot used to send lfg messages for Valorant. \n\nMade by \`Sans#0001\` <@366536353418182657>.\n\u200b`);
 
-    const groups = ['general', 'search'];
+    const groups = ['info', 'action', 'other'];
     groups.forEach(item => {
       let group = commands
         .filter(c => c.config.group === item)

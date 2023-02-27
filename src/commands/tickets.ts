@@ -1,11 +1,20 @@
+// count by claimant, otherwise closer
+
 import { SlashCommandBuilder, EmbedBuilder as Embed, ChatInputCommandInteraction } from 'discord.js';
 import { command, CustomClient } from '..';
 
 const cmd: command = {
-  data: new SlashCommandBuilder().setName('ping').setDescription('Pong!').setDMPermission(true),
+  data: new SlashCommandBuilder()
+    .setName('tickets')
+    .setDescription('Ticket activity for staff members')
+    .addUserOption(option => {
+      option.setName('user').setDescription('The staff member you want to check ticket activity for.').setRequired(true);
+      return option;
+    })
+    .setDMPermission(false),
   config: {
-    group: 'info',
-    cooldown: 3
+    group: 'other',
+    cooldown: 60
   },
   async execute(interaction: ChatInputCommandInteraction, client: CustomClient) {
     const message = await interaction.deferReply({ fetchReply: true });
