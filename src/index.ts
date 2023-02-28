@@ -29,19 +29,25 @@ export interface command {
 }
 
 const commandsData: CommandData[] = [];
-console.log('1');
+
+const rate = await import('./commands/rate.js').catch(e => console.log(e));
+
+console.log(rate);
 
 for (const file of commandFiles) {
+  
+  console.log(file);
   const c = await import(`./commands/${file}`);
 
+  //console.log(c);
+  console.log(c.default.data.name);
+
   const command: command = c.default;
-  console.log(command.data.name);
 
   commandsData.push(command.data.toJSON());
 }
 
-console.log('2');
-console.log(commandsData.map(c => c.name));
+console.log('doesnt reach this');
 
 const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
