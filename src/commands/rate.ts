@@ -6,7 +6,7 @@ import j5 from 'json5';
 import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { checkUser, DB_UserTable } from '../utils.js';
+import { calculateRating, checkUser, DB_User } from '../utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,7 +40,7 @@ export enum stringRating {
 
 const [s, e] = [config.stars.full, config.stars.empty];
 
-const capitalize = (str: string) => {
+export const capitalize = (str: string) => {
   return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
@@ -54,17 +54,6 @@ export function getStringRating(rating: integerRating): stringRating {
   };
 
   return lookupTable[rating];
-}
-
-export function formatNumber(num: number): number {
-  const numString = num.toString();
-  const decimalIndex = numString.indexOf('.');
-
-  if (decimalIndex !== -1) {
-    return parseFloat(num.toFixed(1));
-  } else {
-    return num;
-  }
 }
 
 const cmd: command = {
@@ -94,7 +83,7 @@ const cmd: command = {
     .setDMPermission(false),
   config: {
     group: 'action',
-    cooldown: 1 //2 * 60
+    cooldown: 2 * 60
   },
   async execute(interaction: ChatInputCommandInteraction, client: CustomClient) {
     const user = interaction.options.getUser('user', true);
@@ -169,10 +158,37 @@ const cmd: command = {
           return await modalInteraction.reply({ embeds: [badWordsEmb], ephemeral: true });
         }
 
+        await checkUser(client.db, user.id);
+
+        const users = client.db.table('users');
+
+        const userData = (await users.get<DB_User>(user.id))!;
+
+        let newRating = true;
+
+        if (userData.ratings.some(r => r.id === interaction.user.id)) {
+          const index = userData.ratings.findIndex(rating => rating.id === interaction.user.id);
+
+          userData.ratings[index].rating = rating;
+          userData.ratings[index].message = userInput;
+
+          newRating = false;
+        } else {
+          userData.ratings.push({
+            id: interaction.user.id,
+            rating: rating,
+            message: userInput
+          });
+        }
+
+        userData.rating = calculateRating(userData);
+
+        await users.set<DB_User>(user.id, userData);
+
         const opinionEmb = new Embed()
           .setAuthor({ name: `${user.username}#${user.discriminator}`, iconURL: ratedUserIcon })
           .setTitle(`${starRating}`)
-          .setDescription(`<@${interaction.user.id}>'s rating for <@${user.id}>: **${capitalize(stringRating)}**`)
+          .setDescription(`<@${interaction.user.id}>${newRating ? `'s` : ` updated their`} rating for <@${user.id}>: **${capitalize(stringRating)}**`)
           .addFields({ name: 'Opinion:', value: userInput })
           .setColor(client.config.embedColor)
           .setThumbnail(guildIcon)
@@ -180,17 +196,6 @@ const cmd: command = {
           .setTimestamp();
 
         await modalInteraction.reply({ embeds: [opinionEmb] });
-
-        await checkUser(client.db, user.id);
-
-        const users = (await client.db.get<DB_UserTable>('users'))!;
-
-        const num = users[user.id]!.rating;
-
-        users[user.id]!.rating = formatNumber((num + rating) / 2);
-        users[user.id]!.rates += 1;
-
-        await client.db.set<DB_UserTable>('users', users);
 
         return;
       })

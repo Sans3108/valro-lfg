@@ -1,4 +1,4 @@
-import { Collection, CommandInteraction, EmbedBuilder as Embed, Events } from 'discord.js';
+import { Collection, CommandInteraction, EmbedBuilder as Embed, Events, MessagePayload } from 'discord.js';
 import { CustomClient, event } from '../index.js';
 import { getPermissionsNames } from '../utils.js';
 
@@ -78,7 +78,7 @@ const evt: event = {
       await command.execute(interaction, client);
     } catch (error) {
       console.error(error);
-      const reply = { content: 'There was an error while executing this command!', ephemeral: true };
+      const reply = { content: 'There was an error while executing this command!', embeds: [], ephemeral: true };
       if (interaction.replied || interaction.deferred) return interaction.editReply(reply).catch(console.error);
       return interaction.reply(reply).catch(console.error);
     }

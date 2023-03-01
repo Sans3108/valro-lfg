@@ -56,7 +56,6 @@ import { Client, Collection, GatewayIntentBits as Intents } from 'discord.js';
 import { readFileSync } from 'fs';
 import j5 from 'json5';
 import { QuickDB } from 'quick.db';
-import { DB_User } from './utils.js';
 
 export interface ClientConfig {
   embedColor: number;
@@ -100,12 +99,6 @@ client.config = j5.parse(readFileSync(path.join(__dirname, '../config', 'config.
 client.commands = new Collection();
 client.cooldowns = new Collection();
 client.db = new QuickDB();
-
-console.log('Loading DB...');
-
-if (await client.db.get('users')) {
-  await client.db.set<DB_User>('users', {});
-}
 
 console.log('Loading events...');
 

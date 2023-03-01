@@ -1,32 +1,41 @@
 import { QuickDB } from 'quick.db';
+import { integerRating } from './commands/rate.js';
 
-export interface DB_User {
+export interface UserRating {
   id: string;
-  rating: number;
-  rates: number;
+  rating: integerRating;
+  message: string;
 }
 
-export interface DB_UserTable {
-  [key: string]: DB_User | undefined;
+export interface DB_User {
+  rating: number;
+  ratings: UserRating[];
 }
 
 export async function checkUser(db: QuickDB, id: string) {
-  const users = (await db.get<DB_UserTable>('users'))!;
-  let changes = false;
+  const users = db.table('users');
 
-  if (!users[id]) {
-    users[id] = {
-      id: id,
+  if (!(await users.has(id))) {
+    await users.set<DB_User>(id, {
       rating: 3,
-      rates: 0
-    };
-
-    changes = true;
+      ratings: []
+    });
   }
+}
 
-  if (changes) {
-    await db.set<DB_UserTable>('users', users);
+export function formatNumber(num: number): number {
+  const numString = num.toString();
+  const decimalIndex = numString.indexOf('.');
+
+  if (decimalIndex !== -1) {
+    return parseFloat(num.toFixed(1));
+  } else {
+    return num;
   }
+}
+
+export function calculateRating(userData: DB_User): number {
+  return formatNumber(userData.ratings.reduce((acc, r) => acc + r.rating, 0) / userData.ratings.length);
 }
 
 export const Permissions = {

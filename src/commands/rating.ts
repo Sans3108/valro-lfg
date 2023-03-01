@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, EmbedBuilder as Embed, ChatInputCommandInteraction } from 'discord.js';
 import { command, CustomClient } from '../index.js';
-import { checkUser, DB_UserTable } from '../utils.js';
-import { getStringRating, integerRating, stringRating } from './rate.js';
+import { checkUser, DB_User } from '../utils.js';
+import { capitalize, getStringRating, integerRating, stringRating } from './rate.js';
 
 const cmd: command = {
   data: new SlashCommandBuilder()
@@ -36,16 +36,18 @@ const cmd: command = {
 
     await checkUser(client.db, user.id);
 
-    const dbUser = (await client.db.get<DB_UserTable>('users'))![user.id];
-    const rounded: integerRating = Math.round(dbUser!.rating);
+    const users = client.db.table('users');
+    const userData = (await users.get<DB_User>(user.id))!;
+
+    const rounded: integerRating = Math.round(userData.rating);
     const stringRating: stringRating = getStringRating(rounded);
     const starRating = `${client.config.stars.full.repeat(rounded)}${client.config.stars.empty.repeat(5 - rounded)}`;
 
     const ratingEmb = new Embed()
       .setColor(client.config.embedColor)
       .setAuthor({ name: `${user.username}#${user.discriminator}`, iconURL: userIcon })
-      .setTitle(`${stringRating} - ${starRating}`)
-      .setDescription(`${user} has a rating of **${rounded} / 5** (${dbUser!.rating}) with **${dbUser!.rates}** votes!`)
+      .setTitle(`${capitalize(stringRating)} - ${starRating}`)
+      .setDescription(`${user} has a rating of **${rounded} / 5** (${userData.rating}) with **${userData.ratings.length}** votes!`)
       .setThumbnail(guildIcon)
       .setFooter({ text: 'Valorant Romania' })
       .setTimestamp();
