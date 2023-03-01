@@ -1,18 +1,26 @@
 import { Collection, CommandInteraction, EmbedBuilder as Embed, Events } from 'discord.js';
-import { CustomClient, event } from '..';
+import { CustomClient, event } from '../index.js';
+import { getPermissionsNames } from '../utils.js';
 
 const evt: event = {
   type: Events.InteractionCreate,
   execute: async (interaction: CommandInteraction) => {
-    if (!interaction.isCommand()) return;
+    if (!interaction.isChatInputCommand()) return;
 
     const client = interaction.client as CustomClient;
 
-    if (interaction.inGuild() && !interaction.guild?.members.me?.permissions.has(281600n))
+    const permBit = 347136n;
+
+    if (interaction.inGuild() && !interaction.guild?.members.me?.permissions.has(permBit))
       return await interaction.reply({
         embeds: [
           new Embed()
-            .setDescription(`I'm missing permissions!\nPermission bit: 281600\n\nDon't know what it is? Check [this](https://discordapi.com/permissions.html#281600)`)
+            .setTitle(`I'm missing permissions!`)
+            .setDescription(
+              `Make sure I have these permissions:\n${getPermissionsNames(permBit)
+                .map(s => `\`${s}\``)
+                .join(', ')}`
+            )
             .setColor(client.config.embedColor)
         ],
         ephemeral: true

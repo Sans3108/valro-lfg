@@ -36,7 +36,7 @@ const cmd: command = {
     })
     .setDMPermission(false),
   config: {
-    group: 'search',
+    group: 'action',
     cooldown: 5 * 60
   },
   async execute(interaction: ChatInputCommandInteraction, client: CustomClient) {

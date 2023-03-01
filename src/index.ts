@@ -1,6 +1,11 @@
 console.log('Starting...');
 
 console.log('Configuring ENV vars...');
+function test() {
+  const a = 'b';
+  return a;
+}
+const c = test();
 import { config as dotenvConfig } from 'dotenv';
 dotenvConfig();
 
@@ -11,8 +16,8 @@ if (!process.env.TOKEN || !process.env.CLIENT_ID) {
 console.log('Registering commands...');
 import { REST, Routes, SlashCommandBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody as CommandData } from 'discord.js';
 import { readdirSync } from 'fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,7 +36,10 @@ export interface command {
 const commandsData: CommandData[] = [];
 
 for (const file of commandFiles) {
-  const command: command = (await import(`./commands/${file}`)).default;
+  const c = await import(`./commands/${file}`);
+
+  const command: command = c.default;
+
   commandsData.push(command.data.toJSON());
 }
 
@@ -47,29 +55,40 @@ console.log('Importing packages...');
 import { Client, Collection, GatewayIntentBits as Intents } from 'discord.js';
 import { readFileSync } from 'fs';
 import j5 from 'json5';
+import { QuickDB } from 'quick.db';
+import { DB_User } from './utils.js';
+
+export interface ClientConfig {
+  embedColor: number;
+  ranks: {
+    unranked: string;
+    iron: string;
+    bronze: string;
+    silver: string;
+    gold: string;
+    platinum: string;
+    diamond: string;
+    ascendant: string;
+    immortal: string;
+    radiant: string;
+  };
+  arrows: {
+    left: string;
+    right: string;
+  };
+  stars: {
+    empty: string;
+    full: string;
+  };
+  badWords: string[];
+  staffRoles: string[];
+}
 
 export interface CustomClient extends Client {
-  config: {
-    embedColor: number;
-    ranks: {
-      unranked: string;
-      iron: string;
-      bronze: string;
-      silver: string;
-      gold: string;
-      platinum: string;
-      diamond: string;
-      ascendant: string;
-      immortal: string;
-      radiant: string;
-    };
-    arrows: {
-      left: string;
-      right: string;
-    };
-  };
+  config: ClientConfig;
   commands: Collection<string, commandWithId>;
   cooldowns: Collection<string, Collection<string, number>>;
+  db: QuickDB;
 }
 
 console.log('Setting up client...');
@@ -80,6 +99,13 @@ const client = new Client({
 client.config = j5.parse(readFileSync(path.join(__dirname, '../config', 'config.json5'), 'utf8'));
 client.commands = new Collection();
 client.cooldowns = new Collection();
+client.db = new QuickDB();
+
+console.log('Loading DB...');
+
+if (await client.db.get('users')) {
+  await client.db.set<DB_User>('users', {});
+}
 
 console.log('Loading events...');
 

@@ -2,3 +2,7 @@ node_modules/
 dist/
 .env
 package-lock.json
+config/config.json5
+json.sqlite
+config/badWords.json5
+config/config.json5
