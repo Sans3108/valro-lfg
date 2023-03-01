@@ -1,6 +1,11 @@
 console.log('Starting...');
 
 console.log('Configuring ENV vars...');
+function test() {
+  const a = 'b';
+  return a;
+}
+const c = test();
 import { config as dotenvConfig } from 'dotenv';
 dotenvConfig();
 
@@ -30,24 +35,13 @@ export interface command {
 
 const commandsData: CommandData[] = [];
 
-const rate = await import('./commands/rate.js').catch(e => console.log(e));
-
-console.log(rate);
-
 for (const file of commandFiles) {
-  
-  console.log(file);
   const c = await import(`./commands/${file}`);
-
-  //console.log(c);
-  console.log(c.default.data.name);
 
   const command: command = c.default;
 
   commandsData.push(command.data.toJSON());
 }
-
-console.log('doesnt reach this');
 
 const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
@@ -62,6 +56,7 @@ import { Client, Collection, GatewayIntentBits as Intents } from 'discord.js';
 import { readFileSync } from 'fs';
 import j5 from 'json5';
 import { QuickDB } from 'quick.db';
+import { DB_User } from './utils.js';
 
 export interface ClientConfig {
   embedColor: number;
@@ -108,39 +103,8 @@ client.db = new QuickDB();
 
 console.log('Loading DB...');
 
-export interface DB_User {
-  id: string;
-  rating: number;
-  rates: number;
-}
-
-export interface DB_UserTable {
-  [key: string]: DB_User | undefined;
-}
-
 if (await client.db.get('users')) {
   await client.db.set<DB_User>('users', {});
-}
-
-export async function checkUser(id: string) {
-  const users = (await client.db.get<DB_UserTable>('users'))!;
-  let changes = false;
-
-  if (!users[id]) {
-    users[id] = {
-      id: id,
-      rating: 3,
-      rates: 0
-    };
-
-    changes = true;
-  }
-
-  if (changes) {
-    await client.db.set<DB_UserTable>('users', users);
-  }
-
-  return;
 }
 
 console.log('Loading events...');

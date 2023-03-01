@@ -1,5 +1,6 @@
 import { SlashCommandBuilder, EmbedBuilder as Embed, ChatInputCommandInteraction } from 'discord.js';
-import { checkUser, command, CustomClient, DB_UserTable } from '../index.js';
+import { command, CustomClient } from '../index.js';
+import { checkUser, DB_UserTable } from '../utils.js';
 import { getStringRating, integerRating, stringRating } from './rate.js';
 
 const cmd: command = {
@@ -21,7 +22,19 @@ const cmd: command = {
     const userIcon = user.avatarURL({ forceStatic: false }) || user.defaultAvatarURL;
     const guildIcon = interaction.guild?.iconURL({ forceStatic: false }) || userIcon;
 
-    await checkUser(user.id);
+    if (user.bot) {
+      const botUserEmb = new Embed()
+        .setTitle(`Invalid User`)
+        .setDescription(`Bot users don't have a rating!`)
+        .setAuthor({ name: `${interaction.user.username}#${interaction.user.discriminator}`, iconURL: userIcon })
+        .setColor(client.config.embedColor)
+        .setThumbnail(guildIcon)
+        .setFooter({ text: 'Valorant Romania' });
+
+      return await interaction.reply({ embeds: [botUserEmb], ephemeral: true });
+    }
+
+    await checkUser(client.db, user.id);
 
     const dbUser = (await client.db.get<DB_UserTable>('users'))![user.id];
     const rounded: integerRating = Math.round(dbUser!.rating);
@@ -36,6 +49,8 @@ const cmd: command = {
       .setThumbnail(guildIcon)
       .setFooter({ text: 'Valorant Romania' })
       .setTimestamp();
+
+    return await interaction.reply({ embeds: [ratingEmb] });
   }
 };
 

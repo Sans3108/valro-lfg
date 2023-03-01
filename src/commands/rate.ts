@@ -1,21 +1,22 @@
 import { SlashCommandBuilder, EmbedBuilder as Embed, ChatInputCommandInteraction, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ModalSubmitInteraction } from 'discord.js';
-import { checkUser, ClientConfig, command, CustomClient, DB_UserTable } from '../index.js';
+import { ClientConfig, command, CustomClient } from '../index.js';
+
 import { randomBytes } from 'crypto';
 import j5 from 'json5';
 import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { checkUser, DB_UserTable } from '../utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const config: ClientConfig = j5.parse(readFileSync(path.join(__dirname, '../../config', 'config.json5'), 'utf8'));
+const badWords: string[] = j5.parse(readFileSync(path.join(__dirname, '../../config', 'badWords.json5'), 'utf8'));
 
 function nonce() {
   return randomBytes(4).toString('hex');
 }
-
-const badWords = config.badWords;
 
 function hasBadWords(input: string): boolean {
   return badWords.some(word => input.includes(word));
@@ -93,7 +94,7 @@ const cmd: command = {
     .setDMPermission(false),
   config: {
     group: 'action',
-    cooldown: 2 * 60
+    cooldown: 1 //2 * 60
   },
   async execute(interaction: ChatInputCommandInteraction, client: CustomClient) {
     const user = interaction.options.getUser('user', true);
@@ -108,7 +109,19 @@ const cmd: command = {
     if (user.bot) {
       const botUserEmb = new Embed()
         .setTitle(`Invalid User`)
-        .setDescription('You cannot rate bot users.')
+        .setDescription('You cannot rate bot users!')
+        .setAuthor({ name: `${interaction.user.username}#${interaction.user.discriminator}`, iconURL: userIcon })
+        .setColor(client.config.embedColor)
+        .setThumbnail(guildIcon)
+        .setFooter({ text: 'Valorant Romania' });
+
+      return await interaction.reply({ embeds: [botUserEmb], ephemeral: true });
+    }
+
+    if (user.id === interaction.user.id) {
+      const botUserEmb = new Embed()
+        .setTitle(`Invalid User`)
+        .setDescription('You cannot rate yourself!')
         .setAuthor({ name: `${interaction.user.username}#${interaction.user.discriminator}`, iconURL: userIcon })
         .setColor(client.config.embedColor)
         .setThumbnail(guildIcon)
@@ -167,8 +180,11 @@ const cmd: command = {
           .setTimestamp();
 
         await modalInteraction.reply({ embeds: [opinionEmb] });
-        await checkUser(user.id);
+
+        await checkUser(client.db, user.id);
+
         const users = (await client.db.get<DB_UserTable>('users'))!;
+
         const num = users[user.id]!.rating;
 
         users[user.id]!.rating = formatNumber((num + rating) / 2);

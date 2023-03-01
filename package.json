@@ -5,8 +5,9 @@
   "main": "dist/index.js",
   "scripts": {
     "watch": "tsc -w",
-    "build": "tsc",
-    "start": "node ."
+    "build": "npm run cleanup && tsc",
+    "start": "node .",
+    "cleanup": "rm -rf dist || rmdir /s /q dist"
   },
   "type": "module",
   "keywords": [],

@@ -19,8 +19,7 @@
     "module": "ESNext",
     "skipDefaultLibCheck": true,
     "skipLibCheck": true,
-    "checkJs": false,
-    "sourceMap": true
+    "checkJs": false
   },
   "include": ["./src/**/*"],
   "exclude": ["node_modules"]
