@@ -1,6 +1,6 @@
 // count by claimant, otherwise closer
 
-import { SlashCommandBuilder, EmbedBuilder as Embed, ChatInputCommandInteraction, AttachmentBuilder } from 'discord.js';
+import { SlashCommandBuilder, EmbedBuilder as Embed, ChatInputCommandInteraction, AttachmentBuilder, Collection, Message } from 'discord.js';
 import { command, CustomClient } from '..';
 
 const formatMonth = (month: number): string => {
@@ -18,6 +18,12 @@ export function dateToSnowflake(date: Date, epoch = DISCORD_EPOCH): string {
   const timestamp = date.getTime() - epoch;
   const snowflake = (BigInt(timestamp) << 22n).toString();
   return snowflake;
+}
+
+export function removeDupes<T>(arr: T[]): T[] {
+  return arr.filter((item, index, self) => {
+    return index === self.findIndex(t => JSON.stringify(t) === JSON.stringify(item));
+  });
 }
 
 const cmd: command = {
@@ -43,7 +49,10 @@ const cmd: command = {
   async execute(interaction: ChatInputCommandInteraction, client: CustomClient) {
     await interaction.deferReply();
 
-    const logsChannel = await interaction.guild!.channels.fetch('856881888072957962'); // 856881888072957962
+    const channelId = '856881888072957962'; // 856881888072957962
+    const botId = '508391840525975553'; // 508391840525975553
+
+    const logsChannel = await interaction.guild!.channels.fetch(channelId);
 
     const userIcon = interaction.user.avatarURL({ forceStatic: false }) || interaction.user.defaultAvatarURL;
     const guildIcon = interaction.guild?.iconURL({ forceStatic: false }) || userIcon;
@@ -87,48 +96,81 @@ const cmd: command = {
     const endDate = new Date(endString);
     const endSnowflake = dateToSnowflake(endDate);
 
-    let messages = (
-      await logsChannel.messages.fetch({
-        before: endSnowflake,
-        after: startSnowflake,
-        limit: 100
-      })
-    ).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-
-    if (messages.size === 0) return interaction.editReply({ embeds: [noMessages] });
-
-    if (messages.size > 99) {
-      while (true) {
-        const fetched = (
+    let msgList = removeDupes(
+      Array.from(
+        (
           await logsChannel.messages.fetch({
-            before: dateToSnowflake(messages.first()!.createdAt),
-            after: startSnowflake,
+            before: endSnowflake,
             limit: 100
           })
-        ).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-
-        if (fetched.size === 0) break;
-        if (fetched.first()!.createdAt < startDate) break;
-
-        messages = messages.concat(fetched).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-      }
-    }
-
-    messages = messages
+        ).values()
+      )
+    )
       .filter(msg => {
         const s = startDate;
         const e = endDate;
         const c = msg.createdAt;
 
         const inRange = c >= s && c <= e;
-        const fromTarget = msg.author.id === '508391840525975553'; // 508391840525975553
+
+        return inRange;
+      })
+      .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+
+    if (msgList.length === 0) return interaction.editReply({ embeds: [noMessages] });
+
+    if (msgList.length >= 99 && msgList[0].createdTimestamp > startDate.getTime()) {
+      while (true) {
+        const batch = removeDupes(
+          Array.from(
+            (
+              await logsChannel.messages.fetch({
+                before: msgList[0].id,
+                limit: 100
+              })
+            ).values()
+          )
+        )
+          .filter(msg => {
+            const s = startDate;
+            const e = endDate;
+            const c = msg.createdAt;
+
+            const inRange = c >= s && c <= e;
+
+            return inRange;
+          })
+          .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+
+        msgList = removeDupes(msgList.concat(batch))
+          .filter(msg => {
+            const s = startDate;
+            const e = endDate;
+            const c = msg.createdAt;
+
+            const inRange = c >= s && c <= e;
+
+            return inRange;
+          })
+          .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+
+        if (msgList.length <= 99 || msgList[0].createdTimestamp > startDate.getTime()) break;
+      }
+    }
+
+    const messageList = removeDupes(msgList)
+      .filter(msg => {
+        const s = startDate;
+        const e = endDate;
+        const c = msg.createdAt;
+
+        const inRange = c >= s && c <= e;
+        const fromTarget = msg.author.id === botId;
         const hasEmbeds = msg.embeds.length > 0;
 
         return inRange && fromTarget && hasEmbeds;
       })
-      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-
-    const messageList = Array.from(new Set(Array.from(messages.values()))); // Remove any dupes if any (kinda useless tho)
+      .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
     if (messageList.length === 0) return interaction.editReply({ embeds: [noMessages] });
 
@@ -180,7 +222,7 @@ const cmd: command = {
     });
 
     const dataStr =
-      `Ticket Stats for ${monthNames[month]} ${year}\n\n` +
+      `Ticket Stats for ${monthNames[month]} ${year} (${data.length} Total Tickets)\n\n` +
       users
         .map(u => {
           const tickets = data.filter(t => t.responsible.id === u.id);
