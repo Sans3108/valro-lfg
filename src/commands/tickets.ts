@@ -1,6 +1,6 @@
 // count by claimant, otherwise closer
 
-import { SlashCommandBuilder, EmbedBuilder as Embed, ChatInputCommandInteraction, AttachmentBuilder } from 'discord.js';
+import { SlashCommandBuilder, EmbedBuilder as Embed, ChatInputCommandInteraction, AttachmentBuilder, Collection, Message } from 'discord.js';
 import { command, CustomClient } from '..';
 
 const formatMonth = (month: number): string => {
@@ -18,6 +18,12 @@ export function dateToSnowflake(date: Date, epoch = DISCORD_EPOCH): string {
   const timestamp = date.getTime() - epoch;
   const snowflake = (BigInt(timestamp) << 22n).toString();
   return snowflake;
+}
+
+export function removeDupes<T>(arr: T[]): T[] {
+  return arr.filter((item, index, self) => {
+    return index === self.findIndex(t => JSON.stringify(t) === JSON.stringify(item));
+  });
 }
 
 const cmd: command = {
@@ -43,7 +49,10 @@ const cmd: command = {
   async execute(interaction: ChatInputCommandInteraction, client: CustomClient) {
     await interaction.deferReply();
 
-    const logsChannel = await interaction.guild!.channels.fetch('856881888072957962'); // 856881888072957962
+    const channelId = '856881888072957962'; // 856881888072957962
+    const botId = '508391840525975553'; // 508391840525975553
+
+    const logsChannel = await interaction.guild!.channels.fetch(channelId);
 
     const userIcon = interaction.user.avatarURL({ forceStatic: false }) || interaction.user.defaultAvatarURL;
     const guildIcon = interaction.guild?.iconURL({ forceStatic: false }) || userIcon;
@@ -87,115 +96,246 @@ const cmd: command = {
     const endDate = new Date(endString);
     const endSnowflake = dateToSnowflake(endDate);
 
-    let messages = (
-      await logsChannel.messages.fetch({
-        before: endSnowflake,
-        after: startSnowflake,
-        limit: 100
-      })
-    ).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-
-    if (messages.size === 0) return interaction.editReply({ embeds: [noMessages] });
-
-    if (messages.size > 99) {
-      while (true) {
-        const fetched = (
+    let msgList = removeDupes(
+      Array.from(
+        (
           await logsChannel.messages.fetch({
-            before: dateToSnowflake(messages.first()!.createdAt),
+            before: endSnowflake,
             after: startSnowflake,
             limit: 100
           })
-        ).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-
-        if (fetched.size === 0) break;
-        if (fetched.first()!.createdAt < startDate) break;
-
-        messages = messages.concat(fetched).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-      }
-    }
-
-    messages = messages
+        ).values()
+      )
+    )
       .filter(msg => {
         const s = startDate;
         const e = endDate;
         const c = msg.createdAt;
 
         const inRange = c >= s && c <= e;
-        const fromTarget = msg.author.id === '508391840525975553'; // 508391840525975553
-        const hasEmbeds = msg.embeds.length > 0;
 
-        return inRange && fromTarget && hasEmbeds;
+        return inRange;
       })
-      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+      .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
-    const messageList = Array.from(new Set(Array.from(messages.values()))); // Remove any dupes if any (kinda useless tho)
+    if (msgList.length === 0) return interaction.editReply({ embeds: [noMessages] });
 
-    if (messageList.length === 0) return interaction.editReply({ embeds: [noMessages] });
+    console.log(msgList.length);
 
-    const _data: {
-      responsible: {
-        id: string;
-        name?: string;
-      };
-      ticket: {
-        caseId: number;
-        messageURL: string;
-      };
-    }[] = messageList.map(m => {
-      const fields = m.embeds[0].fields;
+    if (msgList.length >= 99) {
+      let itr = 0;
 
-      const claimedField = fields.find(f => f.name.toLowerCase().includes('claimed by'))!;
-      const closedField = fields.find(f => f.name.toLowerCase().includes('closed by'))!;
+      while (itr < 10) {
+        const batch = removeDupes(
+          Array.from(
+            (
+              await logsChannel.messages.fetch({
+                before: msgList[0].id,
+                after: startSnowflake,
+                limit: 100
+              })
+            ).values()
+          )
+        )
+          .filter(msg => {
+            const s = startDate;
+            const e = endDate;
+            const c = msg.createdAt;
 
-      const caseId = fields.find(f => f.name.toLowerCase().includes('ticket id'))!.value;
+            const inRange = c >= s && c <= e;
 
-      const responsible = claimedField.value.toLowerCase().includes('not claimed') ? closedField.value : claimedField.value;
+            return inRange;
+          })
+          .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
-      const resId = responsible.slice(2, -1);
+        msgList = removeDupes(msgList.concat(batch))
+          .filter(msg => {
+            const s = startDate;
+            const e = endDate;
+            const c = msg.createdAt;
 
-      return {
-        responsible: {
-          id: resId
-        },
-        ticket: {
-          caseId: parseInt(caseId),
-          messageURL: m.url
-        }
-      };
-    });
+            const inRange = c >= s && c <= e;
 
-    const responsibleIds = Array.from(new Set(_data.map(t => t.responsible.id))).map(id => client.users.fetch(id));
+            return inRange;
+          })
+          .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
-    const users = (await Promise.all(responsibleIds)).map(u => {
-      return {
-        id: u.id,
-        name: `${u.username}#${u.discriminator}`
-      };
-    });
+        if (batch.length <= 99) break;
+        console.log(`${msgList.length} ${batch.length}`);
+        itr++;
+      }
+    }
 
-    const data = _data.map(t => {
-      t.responsible.name = users.find(u => u.id === t.responsible.id)!.name;
+    console.log(msgList.map(m => m.id)); // This should be all the messages between startSnowflake and endSnowflake
 
-      return t;
-    });
 
-    const dataStr =
-      `Ticket Stats for ${monthNames[month]} ${year}\n\n` +
-      users
-        .map(u => {
-          const tickets = data.filter(t => t.responsible.id === u.id);
+    // Failed attempts
 
-          return `${u.name} - ${u.id}\n${tickets.length} Tickets Solved:\n${tickets.map(t => `#${t.ticket.caseId} ${t.ticket.messageURL}`).join('\n')}`;
-        })
-        .join('\n\n');
+    // let messages = (
+    //   await logsChannel.messages.fetch({
+    //     before: endSnowflake,
+    //     after: startSnowflake,
+    //     limit: 50
+    //   })
+    // )
+    //   .filter(msg => {
+    //     const s = startDate;
+    //     const e = endDate;
+    //     const c = msg.createdAt;
 
-    const textBuffer = Buffer.from(dataStr, 'utf-8');
+    //     const inRange = c >= s && c <= e;
+    //     const fromTarget = msg.author.id === botId;
+    //     const hasEmbeds = msg.embeds.length > 0;
 
-    const dataFile = new AttachmentBuilder(textBuffer, {
-      name: `Ticket_Stats_${monthNames[month]}_${year}.txt`
-    });
+    //     return inRange && fromTarget && hasEmbeds;
+    //   })
+    //   .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
-    return interaction.editReply({ content: 'This command is expensive to use and could cause errors. Please do not use recklessly.', files: [dataFile] });
+    // if (messages.size === 0) return interaction.editReply({ embeds: [noMessages] });
+
+    // let iterations = 0;
+
+    // while (messages.size >= 49) {
+    //   console.log('loop one');
+
+    //   const fetched = (
+    //     await logsChannel.messages.fetch({
+    //       before: messages.first()!.id,
+    //       after: startSnowflake,
+    //       limit: 50
+    //     })
+    //   )
+    //     .filter(msg => {
+    //       const s = startDate;
+    //       const e = endDate;
+    //       const c = msg.createdAt;
+
+    //       const inRange = c >= s && c <= e;
+    //       const fromTarget = msg.author.id === botId;
+    //       const hasEmbeds = msg.embeds.length > 0;
+
+    //       return inRange && fromTarget && hasEmbeds;
+    //     })
+    //     .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+    //   messages = messages
+    //     .concat(fetched)
+    //     .filter(msg => {
+    //       const s = startDate;
+    //       const e = endDate;
+    //       const c = msg.createdAt;
+
+    //       const inRange = c >= s && c <= e;
+    //       const fromTarget = msg.author.id === botId;
+    //       const hasEmbeds = msg.embeds.length > 0;
+
+    //       return inRange && fromTarget && hasEmbeds;
+    //     })
+    //     .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+    //   console.log(`${fetched.size} fetched`);
+
+    //   if (fetched.size === 0) break;
+
+    //   console.log(`createdAt: ` + fetched.first()!.createdAt);
+    //   console.log(`startDate: ` + startDate);
+    //   if (fetched.size <= 49) break;
+
+    //   if (fetched.first()!.createdAt < startDate) break;
+    //   if (iterations < 5) {
+    //     iterations++;
+    //   } else {
+    //     console.log('iteration limit');
+    //     break;
+    //   }
+
+    //   console.log(`${messages.size} total`);
+    // }
+
+    // console.log('three');
+
+    // messages = messages
+    //   .filter(msg => {
+    //     const s = startDate;
+    //     const e = endDate;
+    //     const c = msg.createdAt;
+
+    //     const inRange = c >= s && c <= e;
+    //     const fromTarget = msg.author.id === botId;
+    //     const hasEmbeds = msg.embeds.length > 0;
+
+    //     return inRange && fromTarget && hasEmbeds;
+    //   })
+    //   .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+    // const messageList = Array.from(new Set(Array.from(messages.values()))); // Remove any dupes if any (kinda useless tho)
+
+    // if (messageList.length === 0) return interaction.editReply({ embeds: [noMessages] });
+
+    // const _data: {
+    //   responsible: {
+    //     id: string;
+    //     name?: string;
+    //   };
+    //   ticket: {
+    //     caseId: number;
+    //     messageURL: string;
+    //   };
+    // }[] = messageList.map(m => {
+    //   const fields = m.embeds[0].fields;
+
+    //   const claimedField = fields.find(f => f.name.toLowerCase().includes('claimed by'))!;
+    //   const closedField = fields.find(f => f.name.toLowerCase().includes('closed by'))!;
+
+    //   const caseId = fields.find(f => f.name.toLowerCase().includes('ticket id'))!.value;
+
+    //   const responsible = claimedField.value.toLowerCase().includes('not claimed') ? closedField.value : claimedField.value;
+
+    //   const resId = responsible.slice(2, -1);
+
+    //   return {
+    //     responsible: {
+    //       id: resId
+    //     },
+    //     ticket: {
+    //       caseId: parseInt(caseId),
+    //       messageURL: m.url
+    //     }
+    //   };
+    // });
+
+    // const responsibleIds = Array.from(new Set(_data.map(t => t.responsible.id))).map(id => client.users.fetch(id));
+
+    // const users = (await Promise.all(responsibleIds)).map(u => {
+    //   return {
+    //     id: u.id,
+    //     name: `${u.username}#${u.discriminator}`
+    //   };
+    // });
+
+    // const data = _data.map(t => {
+    //   t.responsible.name = users.find(u => u.id === t.responsible.id)!.name;
+
+    //   return t;
+    // });
+
+    // const dataStr =
+    //   `Ticket Stats for ${monthNames[month]} ${year} (${data.length} Total Tickets)\n\n` +
+    //   users
+    //     .map(u => {
+    //       const tickets = data.filter(t => t.responsible.id === u.id);
+
+    //       return `${u.name} - ${u.id}\n${tickets.length} Tickets Solved:\n${tickets.map(t => `#${t.ticket.caseId} ${t.ticket.messageURL}`).join('\n')}`;
+    //     })
+    //     .join('\n\n');
+
+    // const textBuffer = Buffer.from(dataStr, 'utf-8');
+
+    // const dataFile = new AttachmentBuilder(textBuffer, {
+    //   name: `Ticket_Stats_${monthNames[month]}_${year}.txt`
+    // });
+
+    // return interaction.editReply({ content: 'This command is expensive to use and could cause errors. Please do not use recklessly.', files: [dataFile] });
   }
 };
 
