@@ -1,8 +1,9 @@
 {
   // A hex number representing a color (Format: 0x??????)
+  // Will be used as the color for all embeds
   embedColor: 0xFFFFFF,
 
-  // All of those are discord emotes
+  // Valorant Rank Discord Emotes used in the /lfg command
   ranks: { 
     unranked: ':beginner:',
     iron: ':third_place:',
@@ -15,21 +16,23 @@
     immortal: ':boom:',
     radiant: ':alien:'
   },
+
+  // Discord emotes used as arrows in the /lfg command
   arrows: {
     left: ':arrow_left:',
     right: ':arrow_right:'
   },
 
-  // Symbols used for rating
+  // Symbols used in the /rate command
   rating: {
     empty: '☆',
     full: '★'
   },
 
   // Role IDs for staff roles (e.g. Admin, Moderator)
-  // Remove those since they are invalid 
+  // Remove those and add your own
   staffRoles: ['123456789069420', '123456789069420'],
 
-  // The text that shows up at the bottom of the bot's messages (footer)
+  // The text that shows up at the bottom of the bot's embeds (footer)
   footer: 'ValRo LFG'
 }
