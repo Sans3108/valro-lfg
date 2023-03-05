@@ -37,6 +37,7 @@ _Since I am lazy, I will just explain what needs to be done, if you get stuck on
 - Go to your discord server and right click your server's icon, then copy paste the id in the `.env` file next to `GUILD_ID=`
 
   _Make sure there are no spaces between the `=` and the text you pasted in, as well as after the text you pasted in._
+
 - Create a `config.json5` file inside the `config` folder, and copy the contents of `example_config.json5` inside it. From here you can edit the options however you like. Explanation is in comments above the options
 - Create a `badWords.json5` file inside the `config` folder, and, this time, copy the contents of `example_badWords.json5`. Add however many words you want to the array, those will be used to filter out messages in the `/rate` command.
 - Finally, use this link to invite your bot to your server
