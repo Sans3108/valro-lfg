@@ -2,10 +2,13 @@ import { SlashCommandBuilder, EmbedBuilder as Embed, ChatInputCommandInteraction
 import { command, CustomClient } from '..';
 
 const cmd: command = {
-  data: new SlashCommandBuilder().setName('help').setDescription('Help with commands.').setDMPermission(true),
+  data: new SlashCommandBuilder().setName('help').setDescription('Help with commands.').setDMPermission(false),
   config: {
     group: 'info',
-    cooldown: 3
+    cooldown: {
+      staff: 3,
+      normal: 3
+    }
   },
   async execute(interaction: ChatInputCommandInteraction, client: CustomClient) {
     const { commands } = client;

@@ -1,4 +1,4 @@
-import { Collection, CommandInteraction, EmbedBuilder as Embed, Events, MessagePayload } from 'discord.js';
+import { Collection, CommandInteraction, EmbedBuilder as Embed, Events, GuildMemberRoleManager } from 'discord.js';
 import { CustomClient, event } from '../index.js';
 import { getPermissionsNames } from '../utils.js';
 
@@ -9,9 +9,11 @@ const evt: event = {
 
     const client = interaction.client as CustomClient;
 
-    const permBit = 347136n;
+    const permBit = 379904n;
 
-    if (interaction.inGuild() && !interaction.guild?.members.me?.permissions.has(permBit))
+    if (!interaction.inGuild()) return;
+
+    if (!interaction.guild?.members.me?.permissions.has(permBit))
       return await interaction.reply({
         embeds: [
           new Embed()
@@ -40,9 +42,14 @@ const evt: event = {
       client.cooldowns.set(command.data.name, new Collection());
     }
 
+    const memberRoles = (interaction.member.roles as GuildMemberRoleManager).cache.map(role => role.id);
+    const staffRoles = client.config.staffRoles;
+
+    const isStaff = staffRoles.some(r => memberRoles.includes(r));
+
     const now = Date.now();
     const timestamps = client.cooldowns.get(command.data.name);
-    const cooldownAmount = (command.config.cooldown || 3) * 1000;
+    const cooldownAmount = ((isStaff ? command.config.cooldown.staff : command.config.cooldown.normal) || 3) * 1000;
 
     function formatTime(seconds: number): string {
       if (seconds < 1) return 'a moment';

@@ -14,7 +14,10 @@ const cmd: command = {
     .setDMPermission(false),
   config: {
     group: 'other',
-    cooldown: 60
+    cooldown: {
+      staff: 2 * 60,
+      normal: 2 * 60
+    }
   },
   async execute(interaction: ChatInputCommandInteraction, client: CustomClient) {
     const user = interaction.options.getUser('user') || interaction.user;
@@ -29,7 +32,7 @@ const cmd: command = {
         .setAuthor({ name: `${interaction.user.username}#${interaction.user.discriminator}`, iconURL: userIcon })
         .setColor(client.config.embedColor)
         .setThumbnail(guildIcon)
-        .setFooter({ text: 'Valorant Romania' });
+        .setFooter({ text: client.config.footer });
 
       return await interaction.reply({ embeds: [botUserEmb], ephemeral: true });
     }
@@ -41,7 +44,7 @@ const cmd: command = {
 
     const rounded: integerRating = Math.round(userData.rating);
     const stringRating: stringRating = getStringRating(rounded);
-    const starRating = `${client.config.stars.full.repeat(rounded)}${client.config.stars.empty.repeat(5 - rounded)}`;
+    const starRating = `${client.config.rating.full.repeat(rounded)}${client.config.rating.empty.repeat(5 - rounded)}`;
 
     const ratingEmb = new Embed()
       .setColor(client.config.embedColor)
@@ -49,7 +52,7 @@ const cmd: command = {
       .setTitle(`${capitalize(stringRating)} - ${starRating}`)
       .setDescription(`${user} has a rating of **${rounded} / 5** (${userData.rating}) with **${userData.ratings.length}** votes!`)
       .setThumbnail(guildIcon)
-      .setFooter({ text: 'Valorant Romania' })
+      .setFooter({ text: client.config.footer })
       .setTimestamp();
 
     return await interaction.reply({ embeds: [ratingEmb] });

@@ -28,7 +28,10 @@ export interface command {
   data: SlashCommandBuilder;
   config: {
     group: string;
-    cooldown: number;
+    cooldown: {
+      staff: number;
+      normal: number;
+    };
   };
   execute(...args: any): Promise<any>;
 }
@@ -75,12 +78,13 @@ export interface ClientConfig {
     left: string;
     right: string;
   };
-  stars: {
+  rating: {
     empty: string;
     full: string;
   };
   badWords: string[];
   staffRoles: string[];
+  footer: string;
 }
 
 export interface CustomClient extends Client {
@@ -92,7 +96,7 @@ export interface CustomClient extends Client {
 
 console.log('Setting up client...');
 const client = new Client({
-  intents: [Intents.DirectMessages, Intents.Guilds, Intents.GuildMessages, Intents.GuildVoiceStates]
+  intents: [Intents.DirectMessages, Intents.Guilds, Intents.GuildMessages, Intents.GuildVoiceStates, Intents.MessageContent]
 }) as CustomClient;
 
 client.config = j5.parse(readFileSync(path.join(__dirname, '../config', 'config.json5'), 'utf8'));

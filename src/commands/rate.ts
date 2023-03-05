@@ -83,7 +83,10 @@ const cmd: command = {
     .setDMPermission(false),
   config: {
     group: 'action',
-    cooldown: 2 * 60
+    cooldown: {
+      staff: 2 * 60,
+      normal: 2 * 60
+    }
   },
   async execute(interaction: ChatInputCommandInteraction, client: CustomClient) {
     const user = interaction.options.getUser('user', true);
@@ -102,7 +105,7 @@ const cmd: command = {
         .setAuthor({ name: `${interaction.user.username}#${interaction.user.discriminator}`, iconURL: userIcon })
         .setColor(client.config.embedColor)
         .setThumbnail(guildIcon)
-        .setFooter({ text: 'Valorant Romania' });
+        .setFooter({ text: client.config.footer });
 
       return await interaction.reply({ embeds: [botUserEmb], ephemeral: true });
     }
@@ -114,7 +117,7 @@ const cmd: command = {
         .setAuthor({ name: `${interaction.user.username}#${interaction.user.discriminator}`, iconURL: userIcon })
         .setColor(client.config.embedColor)
         .setThumbnail(guildIcon)
-        .setFooter({ text: 'Valorant Romania' });
+        .setFooter({ text: client.config.footer });
 
       return await interaction.reply({ embeds: [botUserEmb], ephemeral: true });
     }
@@ -153,7 +156,7 @@ const cmd: command = {
             .setAuthor({ name: `${interaction.user.username}#${interaction.user.discriminator}`, iconURL: userIcon })
             .setColor(client.config.embedColor)
             .setThumbnail(guildIcon)
-            .setFooter({ text: 'Valorant Romania' });
+            .setFooter({ text: client.config.footer });
 
           return await modalInteraction.reply({ embeds: [badWordsEmb], ephemeral: true });
         }
@@ -192,7 +195,7 @@ const cmd: command = {
           .addFields({ name: 'Opinion:', value: userInput })
           .setColor(client.config.embedColor)
           .setThumbnail(guildIcon)
-          .setFooter({ text: 'Valorant Romania' })
+          .setFooter({ text: client.config.footer })
           .setTimestamp();
 
         await modalInteraction.reply({ embeds: [opinionEmb] });

@@ -1,0 +1,35 @@
+{
+  // A hex number representing a color (Format: 0x??????)
+  embedColor: 0xFFFFFF,
+
+  // All of those are discord emotes
+  ranks: { 
+    unranked: ':beginner:',
+    iron: ':third_place:',
+    bronze: ':fallen_leaf:',
+    silver: ':second_place:',
+    gold: ':first_place:',
+    platinum: ':star:',
+    diamond: ':sparkles:',
+    ascendant: ':fire:',
+    immortal: ':boom:',
+    radiant: ':alien:'
+  },
+  arrows: {
+    left: ':arrow_left:',
+    right: ':arrow_right:'
+  },
+
+  // Symbols used for rating
+  rating: {
+    empty: '☆',
+    full: '★'
+  },
+
+  // Role IDs for staff roles (e.g. Admin, Moderator)
+  // Remove those since they are invalid 
+  staffRoles: ['123456789069420', '123456789069420'],
+
+  // The text that shows up at the bottom of the bot's messages (footer)
+  footer: 'ValRo LFG'
+}

@@ -37,7 +37,10 @@ const cmd: command = {
     .setDMPermission(false),
   config: {
     group: 'action',
-    cooldown: 5 * 60
+    cooldown: {
+      staff: 30,
+      normal: 5 * 60
+    }
   },
   async execute(interaction: ChatInputCommandInteraction, client: CustomClient) {
     await interaction.deferReply({ ephemeral: true });
@@ -126,7 +129,7 @@ const cmd: command = {
       .setColor(client.config.embedColor)
       .setAuthor({ name: `${interaction.user.username}#${interaction.user.discriminator}`, iconURL: userIcon })
       .setThumbnail(guildIcon)
-      .setFooter({ text: 'Valorant Romania' })
+      .setFooter({ text: client.config.footer })
       .setTimestamp();
 
     const message = await interaction.editReply({ embeds: [chooseRanks], components: [menu] });
@@ -157,7 +160,7 @@ const cmd: command = {
           .setColor(client.config.embedColor)
           .setAuthor({ name: `${interaction.user.username}#${interaction.user.discriminator}`, iconURL: userIcon })
           .setThumbnail(guildIcon)
-          .setFooter({ text: 'Valorant Romania' })
+          .setFooter({ text: client.config.footer })
           .setTimestamp();
 
         if (info) {
