@@ -38,7 +38,7 @@ export enum stringRating {
   excellent = 'excellent'
 }
 
-const [s, e] = [config.stars.full, config.stars.empty];
+const [s, e] = [config.rating.full, config.rating.empty];
 
 export const capitalize = (str: string) => {
   return str.charAt(0).toUpperCase() + str.slice(1);
