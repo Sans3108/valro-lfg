@@ -101,7 +101,6 @@ const cmd: command = {
         (
           await logsChannel.messages.fetch({
             before: endSnowflake,
-            after: startSnowflake,
             limit: 100
           })
         ).values()
@@ -120,18 +119,13 @@ const cmd: command = {
 
     if (msgList.length === 0) return interaction.editReply({ embeds: [noMessages] });
 
-    console.log(msgList.length);
-
-    if (msgList.length >= 99) {
-      let itr = 0;
-
-      while (itr < 10) {
+    if (msgList.length >= 99 && msgList[0].createdTimestamp > startDate.getTime()) {
+      while (true) {
         const batch = removeDupes(
           Array.from(
             (
               await logsChannel.messages.fetch({
                 before: msgList[0].id,
-                after: startSnowflake,
                 limit: 100
               })
             ).values()
@@ -160,182 +154,90 @@ const cmd: command = {
           })
           .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
-        if (batch.length <= 99) break;
-        console.log(`${msgList.length} ${batch.length}`);
-        itr++;
+        if (msgList.length <= 99 || msgList[0].createdTimestamp > startDate.getTime()) break;
       }
     }
 
-    console.log(msgList.map(m => m.id)); // This should be all the messages between startSnowflake and endSnowflake
+    const messageList = removeDupes(msgList)
+      .filter(msg => {
+        const s = startDate;
+        const e = endDate;
+        const c = msg.createdAt;
 
+        const inRange = c >= s && c <= e;
+        const fromTarget = msg.author.id === botId;
+        const hasEmbeds = msg.embeds.length > 0;
 
-    // Failed attempts
+        return inRange && fromTarget && hasEmbeds;
+      })
+      .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
-    // let messages = (
-    //   await logsChannel.messages.fetch({
-    //     before: endSnowflake,
-    //     after: startSnowflake,
-    //     limit: 50
-    //   })
-    // )
-    //   .filter(msg => {
-    //     const s = startDate;
-    //     const e = endDate;
-    //     const c = msg.createdAt;
+    if (messageList.length === 0) return interaction.editReply({ embeds: [noMessages] });
 
-    //     const inRange = c >= s && c <= e;
-    //     const fromTarget = msg.author.id === botId;
-    //     const hasEmbeds = msg.embeds.length > 0;
+    const _data: {
+      responsible: {
+        id: string;
+        name?: string;
+      };
+      ticket: {
+        caseId: number;
+        messageURL: string;
+      };
+    }[] = messageList.map(m => {
+      const fields = m.embeds[0].fields;
 
-    //     return inRange && fromTarget && hasEmbeds;
-    //   })
-    //   .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+      const claimedField = fields.find(f => f.name.toLowerCase().includes('claimed by'))!;
+      const closedField = fields.find(f => f.name.toLowerCase().includes('closed by'))!;
 
-    // if (messages.size === 0) return interaction.editReply({ embeds: [noMessages] });
+      const caseId = fields.find(f => f.name.toLowerCase().includes('ticket id'))!.value;
 
-    // let iterations = 0;
+      const responsible = claimedField.value.toLowerCase().includes('not claimed') ? closedField.value : claimedField.value;
 
-    // while (messages.size >= 49) {
-    //   console.log('loop one');
+      const resId = responsible.slice(2, -1);
 
-    //   const fetched = (
-    //     await logsChannel.messages.fetch({
-    //       before: messages.first()!.id,
-    //       after: startSnowflake,
-    //       limit: 50
-    //     })
-    //   )
-    //     .filter(msg => {
-    //       const s = startDate;
-    //       const e = endDate;
-    //       const c = msg.createdAt;
+      return {
+        responsible: {
+          id: resId
+        },
+        ticket: {
+          caseId: parseInt(caseId),
+          messageURL: m.url
+        }
+      };
+    });
 
-    //       const inRange = c >= s && c <= e;
-    //       const fromTarget = msg.author.id === botId;
-    //       const hasEmbeds = msg.embeds.length > 0;
+    const responsibleIds = Array.from(new Set(_data.map(t => t.responsible.id))).map(id => client.users.fetch(id));
 
-    //       return inRange && fromTarget && hasEmbeds;
-    //     })
-    //     .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    const users = (await Promise.all(responsibleIds)).map(u => {
+      return {
+        id: u.id,
+        name: `${u.username}#${u.discriminator}`
+      };
+    });
 
-    //   messages = messages
-    //     .concat(fetched)
-    //     .filter(msg => {
-    //       const s = startDate;
-    //       const e = endDate;
-    //       const c = msg.createdAt;
+    const data = _data.map(t => {
+      t.responsible.name = users.find(u => u.id === t.responsible.id)!.name;
 
-    //       const inRange = c >= s && c <= e;
-    //       const fromTarget = msg.author.id === botId;
-    //       const hasEmbeds = msg.embeds.length > 0;
+      return t;
+    });
 
-    //       return inRange && fromTarget && hasEmbeds;
-    //     })
-    //     .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    const dataStr =
+      `Ticket Stats for ${monthNames[month]} ${year} (${data.length} Total Tickets)\n\n` +
+      users
+        .map(u => {
+          const tickets = data.filter(t => t.responsible.id === u.id);
 
-    //   console.log(`${fetched.size} fetched`);
+          return `${u.name} - ${u.id}\n${tickets.length} Tickets Solved:\n${tickets.map(t => `#${t.ticket.caseId} ${t.ticket.messageURL}`).join('\n')}`;
+        })
+        .join('\n\n');
 
-    //   if (fetched.size === 0) break;
+    const textBuffer = Buffer.from(dataStr, 'utf-8');
 
-    //   console.log(`createdAt: ` + fetched.first()!.createdAt);
-    //   console.log(`startDate: ` + startDate);
-    //   if (fetched.size <= 49) break;
+    const dataFile = new AttachmentBuilder(textBuffer, {
+      name: `Ticket_Stats_${monthNames[month]}_${year}.txt`
+    });
 
-    //   if (fetched.first()!.createdAt < startDate) break;
-    //   if (iterations < 5) {
-    //     iterations++;
-    //   } else {
-    //     console.log('iteration limit');
-    //     break;
-    //   }
-
-    //   console.log(`${messages.size} total`);
-    // }
-
-    // console.log('three');
-
-    // messages = messages
-    //   .filter(msg => {
-    //     const s = startDate;
-    //     const e = endDate;
-    //     const c = msg.createdAt;
-
-    //     const inRange = c >= s && c <= e;
-    //     const fromTarget = msg.author.id === botId;
-    //     const hasEmbeds = msg.embeds.length > 0;
-
-    //     return inRange && fromTarget && hasEmbeds;
-    //   })
-    //   .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-
-    // const messageList = Array.from(new Set(Array.from(messages.values()))); // Remove any dupes if any (kinda useless tho)
-
-    // if (messageList.length === 0) return interaction.editReply({ embeds: [noMessages] });
-
-    // const _data: {
-    //   responsible: {
-    //     id: string;
-    //     name?: string;
-    //   };
-    //   ticket: {
-    //     caseId: number;
-    //     messageURL: string;
-    //   };
-    // }[] = messageList.map(m => {
-    //   const fields = m.embeds[0].fields;
-
-    //   const claimedField = fields.find(f => f.name.toLowerCase().includes('claimed by'))!;
-    //   const closedField = fields.find(f => f.name.toLowerCase().includes('closed by'))!;
-
-    //   const caseId = fields.find(f => f.name.toLowerCase().includes('ticket id'))!.value;
-
-    //   const responsible = claimedField.value.toLowerCase().includes('not claimed') ? closedField.value : claimedField.value;
-
-    //   const resId = responsible.slice(2, -1);
-
-    //   return {
-    //     responsible: {
-    //       id: resId
-    //     },
-    //     ticket: {
-    //       caseId: parseInt(caseId),
-    //       messageURL: m.url
-    //     }
-    //   };
-    // });
-
-    // const responsibleIds = Array.from(new Set(_data.map(t => t.responsible.id))).map(id => client.users.fetch(id));
-
-    // const users = (await Promise.all(responsibleIds)).map(u => {
-    //   return {
-    //     id: u.id,
-    //     name: `${u.username}#${u.discriminator}`
-    //   };
-    // });
-
-    // const data = _data.map(t => {
-    //   t.responsible.name = users.find(u => u.id === t.responsible.id)!.name;
-
-    //   return t;
-    // });
-
-    // const dataStr =
-    //   `Ticket Stats for ${monthNames[month]} ${year} (${data.length} Total Tickets)\n\n` +
-    //   users
-    //     .map(u => {
-    //       const tickets = data.filter(t => t.responsible.id === u.id);
-
-    //       return `${u.name} - ${u.id}\n${tickets.length} Tickets Solved:\n${tickets.map(t => `#${t.ticket.caseId} ${t.ticket.messageURL}`).join('\n')}`;
-    //     })
-    //     .join('\n\n');
-
-    // const textBuffer = Buffer.from(dataStr, 'utf-8');
-
-    // const dataFile = new AttachmentBuilder(textBuffer, {
-    //   name: `Ticket_Stats_${monthNames[month]}_${year}.txt`
-    // });
-
-    // return interaction.editReply({ content: 'This command is expensive to use and could cause errors. Please do not use recklessly.', files: [dataFile] });
+    return interaction.editReply({ content: 'This command is expensive to use and could cause errors. Please do not use recklessly.', files: [dataFile] });
   }
 };
 
